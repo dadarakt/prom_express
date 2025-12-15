@@ -19,7 +19,7 @@ defmodule PromExpress.Emitter do
           description: "Number of bars",
           tags: [:type]
 
-        def metrics do
+        def poll_metrics() do
           %{foo: 42}
         end
 
@@ -28,6 +28,8 @@ defmodule PromExpress.Emitter do
         end
       end
   """
+
+  @callback poll_metrics() :: map()
 
   defmacro __using__(opts) do
     poll_rate  = Keyword.get(opts, :poll_rate, 5_000)
@@ -72,14 +74,22 @@ defmodule PromExpress.Emitter do
   end
 
   defmacro __before_compile__(env) do
-    caller        = env.module
-    metrics       = Module.get_attribute(caller, :metrics_def)       || []
-    event_metrics = Module.get_attribute(caller, :event_metrics_def) || []
-    poll_rate     = Module.get_attribute(caller, :poll_rate)
-    root_event    = Module.get_attribute(caller, :root_event)
+    caller          = env.module
+    polling_metrics = Module.get_attribute(caller, :metrics_def)       || []
+    event_metrics   = Module.get_attribute(caller, :event_metrics_def) || []
+    poll_rate       = Module.get_attribute(caller, :poll_rate)
+    root_event      = Module.get_attribute(caller, :root_event)
 
     last_segment = caller |> Module.split() |> List.last()
     snake        = last_segment |> Macro.underscore() |> String.to_atom()
+
+    if polling_metrics != [] and not Module.defines?(caller, {:poll_metrics, 0}, :def) do
+      raise CompileError,
+        file: env.file,
+        line: env.line,
+        description:
+          "#{inspect(caller)} defines polling_metric/3 but does not implement poll_metrics/0. Please add an implementation."
+    end
 
     # polling events use [:root_event, snake]
     poll_event = [root_event, snake]
@@ -88,7 +98,7 @@ defmodule PromExpress.Emitter do
 
     # ---- Polling metrics AST ----
     polling_metrics_ast =
-      for {name, type, opts} <- metrics do
+      for {name, type, opts} <- polling_metrics do
         metric_name = poll_event ++ [name]
 
         build_fun =
@@ -179,7 +189,7 @@ defmodule PromExpress.Emitter do
       end
 
     polling_fun_ast =
-      if metrics == [] do
+      if polling_metrics == [] do
         quote do
           @impl true
           def polling_metrics(_opts), do: []
@@ -205,8 +215,8 @@ defmodule PromExpress.Emitter do
           end
 
           def execute_metrics() do
-            metrics = unquote(caller).metrics()
-            :telemetry.execute(@poll_event_base, metrics, %{})
+            polled_metrics = unquote(caller).poll_metrics()
+            :telemetry.execute(@poll_event_base, polled_metrics, %{})
           end
         end
       end
@@ -224,10 +234,7 @@ defmodule PromExpress.Emitter do
         @poll_event_base unquote(poll_event)
         @poll_rate       unquote(poll_rate)
 
-        # Conditionally generated polling code
         unquote(polling_fun_ast)
-
-        # Conditionally generated event code (your existing logic)
         unquote(event_metrics_fun_ast)
       end
     end

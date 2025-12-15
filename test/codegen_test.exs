@@ -1,5 +1,5 @@
 defmodule PromExpress.CodegenTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case
 
   alias PromExpress.Test.CompilationHelper
 
@@ -13,7 +13,7 @@ defmodule PromExpress.CodegenTest do
           polling_metric :test_a, :last_value, description: "A"
           event_metric   :event_test, :counter, description: "E", tags: [:type]
 
-          def metrics(), do: %{test_a: 1}
+          def poll_metrics(), do: %{test_a: 1}
           def fire(type), do: PromExpress.metric_event(:event_test, 1, %{type: type})
         end
       end,

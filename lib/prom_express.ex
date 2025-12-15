@@ -31,8 +31,7 @@ defmodule PromExpress do
 
     snake = last_segment |> Macro.underscore() |> String.to_atom()
 
-    # Must match per-metric event_name in Definition:
-    #   [:root_event, snake, name]
+    # Must match per-metric event_name in Emitter
     event_name = [root_event, snake, name_ast]
 
     quote do

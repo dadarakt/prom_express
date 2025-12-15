@@ -10,7 +10,7 @@ defmodule PromExpress.StructTest do
           use PromExpress.Emitter, root_event: :prom_express, poll_rate: 10_000
 
           polling_metric :test_a, :last_value, description: "A"
-          def metrics(), do: %{test_a: 42}
+          def poll_metrics(), do: %{test_a: 42}
         end
       end,
       MyEmitterPolling
