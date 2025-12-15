@@ -16,7 +16,7 @@ defmodule PromExpress.StructTest do
       MyEmitterPolling
     )
 
-    plugin = Module.concat([PromExpress.Metrics, "MyEmitterPollingMetrics"])
+    plugin = Module.concat([PromExpress.Metrics, "MyEmitterPolling"])
     [polling] = plugin.polling_metrics([])
 
     # PromEx.MetricTypes.Polling struct
@@ -37,7 +37,7 @@ defmodule PromExpress.StructTest do
       MyEmitterEvents
     )
 
-    plugin = Module.concat([PromExpress.Metrics, "MyEmitterEventsMetrics"])
+    plugin = Module.concat([PromExpress.Metrics, "MyEmitterEvents"])
     [event_group] = plugin.event_metrics([])
 
     assert match?(%PromEx.MetricTypes.Event{}, event_group)

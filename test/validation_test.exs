@@ -11,7 +11,6 @@ defmodule PromExpress.ValidationTest do
 
             event_metric :known, :counter, description: "Known"
 
-            # This should fail at compile time because :unknown is not defined
             def bad(), do: PromExpress.metric_event(:unknown, 1)
           end
         end

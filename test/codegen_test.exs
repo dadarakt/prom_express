@@ -20,7 +20,7 @@ defmodule PromExpress.CodegenTest do
       MyEmitterForCodegen
     )
 
-    plugin = Module.concat([PromExpress.Metrics, "MyEmitterForCodegenMetrics"])
+    plugin = Module.concat([PromExpress.Metrics, "MyEmitterForCodegen"])
     assert Code.ensure_loaded?(plugin)
 
     attrs = plugin.__info__(:attributes)

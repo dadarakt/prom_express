@@ -8,7 +8,6 @@ defmodule PromExpress.Emitter do
     * `event_metric/3`   — describe **event-based** metrics at compile time
 
   Example:
-
       defmodule MyEmitter do
         use PromExpress.Emitter
 
@@ -24,7 +23,7 @@ defmodule PromExpress.Emitter do
         end
 
         def some_function(type) do
-          PromExpress.metric_event(:bar, 1, %{type: type})
+          metric_event(:bar, 1, %{type: type})
         end
       end
   """
@@ -148,7 +147,7 @@ defmodule PromExpress.Emitter do
     # polling events use [:root_event, snake]
     poll_event = [root_event, snake]
 
-    plugin_mod = Module.concat([PromExpress.Metrics, "#{last_segment}Metrics"])
+    plugin_mod = Module.concat([PromExpress.Metrics, "#{last_segment}"])
 
     # ---- Polling metrics AST ----
     polling_metrics_ast =
