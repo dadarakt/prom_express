@@ -39,7 +39,10 @@ defmodule PromExpress.Emitter do
       )
 
     quote do
+      require PromExpress
       require PromExpress.Emitter
+
+      import PromExpress, only: [metric_event: 2, metric_event: 3]
 
       # keep these attribute names stable
       Module.register_attribute(__MODULE__, :metrics_def,       accumulate: true)
@@ -175,6 +178,39 @@ defmodule PromExpress.Emitter do
         end
       end
 
+    polling_fun_ast =
+      if metrics == [] do
+        quote do
+          @impl true
+          def polling_metrics(_opts), do: []
+        end
+      else
+        quote do
+          @impl true
+          def polling_metrics(_opts) do
+            [
+              build_polling(@poll_rate)
+            ]
+          end
+
+          defp build_polling(poll_rate) do
+            Polling.build(
+              unquote(:"#{root_event}_#{snake}_polling_events"),
+              poll_rate,
+              {__MODULE__, :execute_metrics, []},
+              [
+                unquote_splicing(polling_metrics_ast)
+              ]
+            )
+          end
+
+          def execute_metrics() do
+            metrics = unquote(caller).metrics()
+            :telemetry.execute(@poll_event_base, metrics, %{})
+          end
+        end
+      end
+
     quote do
       defmodule unquote(plugin_mod) do
         use PromEx.Plugin
@@ -188,31 +224,11 @@ defmodule PromExpress.Emitter do
         @poll_event_base unquote(poll_event)
         @poll_rate       unquote(poll_rate)
 
-        @impl true
-        def polling_metrics(_opts) do
-          [
-            build_polling(@poll_rate)
-          ]
-        end
+        # Conditionally generated polling code
+        unquote(polling_fun_ast)
 
+        # Conditionally generated event code (your existing logic)
         unquote(event_metrics_fun_ast)
-
-        defp build_polling(poll_rate) do
-          Polling.build(
-            unquote(:"#{root_event}_#{snake}_polling_events"),
-            poll_rate,
-            {__MODULE__, :execute_metrics, []},
-            [
-              unquote_splicing(polling_metrics_ast)
-            ]
-          )
-        end
-
-        # Polling: calls original metrics/0
-        def execute_metrics() do
-          metrics = unquote(caller).metrics()
-          :telemetry.execute(@poll_event_base, metrics, %{})
-        end
       end
     end
   end
