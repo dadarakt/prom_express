@@ -1,0 +1,21 @@
+defmodule PromExpress.ValidationTest do
+  use ExUnit.Case, async: true
+
+  test "emitting an undefined event metric fails at compile time" do
+    assert_raise ArgumentError, ~r/Unknown event metric/, fn ->
+      PromExpress.Test.CompilationHelper.compile_modules(
+        quote do
+          defmodule MyEmitterInvalid do
+            use PromExpress.Emitter, root_event: :prom_express
+            require PromExpress
+
+            event_metric :known, :counter, description: "Known"
+
+            # This should fail at compile time because :unknown is not defined
+            def bad(), do: PromExpress.metric_event(:unknown, 1)
+          end
+        end
+      )
+    end
+  end
+end
