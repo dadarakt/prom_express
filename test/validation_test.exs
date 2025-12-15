@@ -26,7 +26,7 @@ defmodule PromExpress.ValidationTest do
           defmodule MissingPollingFunction do
             use PromExpress.Emitter, root_event: :prom_express
 
-            polling_metric :test, :sum, description: "missing"
+            polling_metric :test, :sum
           end
         end
       )

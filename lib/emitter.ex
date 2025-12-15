@@ -42,35 +42,55 @@ defmodule PromExpress.Emitter do
 
     quote do
       require PromExpress
-      require PromExpress.Emitter
-
       import PromExpress, only: [metric_event: 2, metric_event: 3]
 
-      # keep these attribute names stable
+      import unquote(__MODULE__), only: [
+        polling_metric: 2,
+        polling_metric: 3,
+        event_metric: 2,
+        event_metric: 3
+      ]
+
       Module.register_attribute(__MODULE__, :metrics_def,       accumulate: true)
       Module.register_attribute(__MODULE__, :event_metrics_def, accumulate: true)
 
       @poll_rate  unquote(poll_rate)
       @root_event unquote(root_event)
 
-      import unquote(__MODULE__), only: [polling_metric: 3, event_metric: 3]
-
       @before_compile unquote(__MODULE__)
     end
   end
 
+  defmacro polling_metric(name, type) when is_atom(name) and is_atom(type) do
+    quote do
+      @metrics_def {unquote(name), unquote(type), []}
+    end
+  end
   defmacro polling_metric(name, type, opts)
            when is_atom(name) and is_atom(type) and is_list(opts) do
     quote do
       @metrics_def {unquote(name), unquote(type), unquote(opts)}
     end
   end
+  defmacro polling_metric(_name, _type, bad_opts) do
+  raise ArgumentError,
+        "polling_metric/3 expects the 3rd argument to be a keyword list, got: #{Macro.to_string(bad_opts)}"
+  end
 
+  defmacro event_metric(name, type) when is_atom(name) and is_atom(type) do
+    quote do
+      @event_metrics_def {unquote(name), unquote(type), []}
+    end
+  end
   defmacro event_metric(name, type, opts)
            when is_atom(name) and is_atom(type) and is_list(opts) do
     quote do
       @event_metrics_def {unquote(name), unquote(type), unquote(opts)}
     end
+  end
+  defmacro event_metric(_name, _type, bad_opts) do
+  raise ArgumentError,
+        "event_metric/3 expects the 3rd argument to be a keyword list, got: #{Macro.to_string(bad_opts)}"
   end
 
   defmacro __before_compile__(env) do
@@ -90,6 +110,40 @@ defmodule PromExpress.Emitter do
         description:
           "#{inspect(caller)} defines polling_metric/3 but does not implement poll_metrics/0. Please add an implementation."
     end
+
+    polling_metrics =
+      Enum.map(polling_metrics, fn
+        {name, type, nil} ->
+          {name, type, []}
+
+        {name, type, opts} when is_list(opts) ->
+          {name, type, opts}
+
+        {name, _type, bad_opts} ->
+          raise CompileError,
+            file: env.file,
+            line: env.line,
+            description:
+              "Invalid options for polling_metric #{inspect(name)}. " <>
+              "Expected a keyword list, got: #{Macro.to_string(bad_opts)}"
+      end)
+
+    event_metrics =
+      Enum.map(event_metrics, fn
+        {name, type, nil} ->
+          {name, type, []}
+
+        {name, type, opts} when is_list(opts) ->
+          {name, type, opts}
+
+        {name, _type, bad_opts} ->
+          raise CompileError,
+            file: env.file,
+            line: env.line,
+            description:
+              "Invalid options for event_metric #{inspect(name)}. " <>
+              "Expected a keyword list, got: #{Macro.to_string(bad_opts)}"
+      end)
 
     # polling events use [:root_event, snake]
     poll_event = [root_event, snake]
