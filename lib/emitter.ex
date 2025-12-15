@@ -147,8 +147,6 @@ defmodule PromExpress.Emitter do
     # polling events use [:root_event, snake]
     poll_event = [root_event, snake]
 
-    plugin_mod = Module.concat([PromExpress.Metrics, "#{last_segment}"])
-
     # ---- Polling metrics AST ----
     polling_metrics_ast =
       for {name, type, opts} <- polling_metrics do
@@ -275,21 +273,19 @@ defmodule PromExpress.Emitter do
       end
 
     quote do
-      defmodule unquote(plugin_mod) do
-        use PromEx.Plugin
-        import Telemetry.Metrics
-        alias PromEx.MetricTypes.Polling
-        alias PromEx.MetricTypes.Event
+      use PromEx.Plugin
+      import Telemetry.Metrics
+      alias PromEx.MetricTypes.Polling
+      alias PromEx.MetricTypes.Event
 
-        Module.register_attribute(__MODULE__, :prom_ex_plugin, persist: true)
-        @prom_ex_plugin true
+      Module.register_attribute(__MODULE__, :prom_ex_plugin, persist: true)
+      @prom_ex_plugin true
 
-        @poll_event_base unquote(poll_event)
-        @poll_rate       unquote(poll_rate)
+      @poll_event_base unquote(poll_event)
+      @poll_rate       unquote(poll_rate)
 
-        unquote(polling_fun_ast)
-        unquote(event_metrics_fun_ast)
-      end
+      unquote(polling_fun_ast)
+      unquote(event_metrics_fun_ast)
     end
   end
 end
