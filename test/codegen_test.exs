@@ -10,8 +10,8 @@ defmodule PromExpress.CodegenTest do
           use PromExpress.Emitter, root_event: :test, poll_rate: 1234
           require PromExpress
 
-          polling_metric :test_a, :last_value, description: "A"
-          event_metric   :event_test, :counter, description: "E", tags: [:type]
+          polling_metric(:test_a, :last_value, description: "A")
+          event_metric(:event_test, :counter, description: "E", tags: [:type])
 
           def poll_metrics(), do: %{test_a: 1}
           def fire(type), do: PromExpress.metric_event(:event_test, 1, %{type: type})

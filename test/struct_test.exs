@@ -9,15 +9,17 @@ defmodule PromExpress.StructTest do
         defmodule MyEmitterPolling do
           use PromExpress.Emitter, root_event: :prom_express
 
-          polling_metric :test_a, :last_value, description: "A"
+          polling_metric(:test_a, :last_value, description: "A")
           def poll_metrics(), do: %{test_a: 42}
         end
       end,
       MyEmitterPolling
     )
 
-    [polling] = apply(MyEmitterPolling, :polling_metrics, [[]])
+    assert function_exported?(MyEmitterPolling, :__promexpress_defined_event_metrics__, 0)
+    assert function_exported?(MyEmitterPolling, :__promexpress_event_base__, 0)
 
+    [polling] = apply(MyEmitterPolling, :polling_metrics, [[]])
     assert match?(%PromEx.MetricTypes.Polling{}, polling)
   end
 
@@ -27,15 +29,19 @@ defmodule PromExpress.StructTest do
         defmodule MyEmitterEvents do
           use PromExpress.Emitter, root_event: :prom_express
 
-          event_metric :event_test, :counter,
+          event_metric(:event_test, :counter,
             description: "Count events",
             tags: [:type]
+          )
         end
       end,
       MyEmitterEvents
     )
 
     [event_group] = apply(MyEmitterEvents, :event_metrics, [[]])
+
+    assert function_exported?(MyEmitterEvents, :__promexpress_defined_event_metrics__, 0)
+    assert function_exported?(MyEmitterEvents, :__promexpress_event_base__, 0)
 
     assert match?(%PromEx.MetricTypes.Event{}, event_group)
 
@@ -58,9 +64,10 @@ defmodule PromExpress.StructTest do
         defmodule MyEmitterCross do
           use PromExpress.Emitter, root_event: :prom_express
 
-          event_metric :event_test, :counter,
+          event_metric(:event_test, :counter,
             description: "Count events",
             tags: [:type]
+          )
         end
       end,
       MyEmitterCross
@@ -96,6 +103,39 @@ defmodule PromExpress.StructTest do
       assert_receive {:telemetry, ^event_name, %{value: 1}, %{type: :abc}}, 1_000
     after
       :telemetry.detach(handler_id)
+    end
+  end
+
+  test "metric_event_in/4 fails compilation for unknown event name when module + name are literals" do
+    # First compile the emitter so it's loaded and exposes the defined event names.
+    CompilationHelper.compile_and_get!(
+      quote do
+        defmodule MyEmitterCrossBad do
+          use PromExpress.Emitter, root_event: :prom_express
+
+          event_metric(:event_ok, :counter,
+            description: "ok",
+            tags: [:type]
+          )
+        end
+      end,
+      MyEmitterCrossBad
+    )
+
+    # Now compilation of the caller should fail because :does_not_exist isn't defined on the emitter.
+    assert_raise ArgumentError, ~r/Unknown event metric :does_not_exist/, fn ->
+      CompilationHelper.compile_and_get!(
+        quote do
+          defmodule MyCallerCrossBad do
+            require PromExpress
+
+            def fire(type) do
+              PromExpress.metric_event_in(MyEmitterCrossBad, :does_not_exist, 1, %{type: type})
+            end
+          end
+        end,
+        MyCallerCrossBad
+      )
     end
   end
 end

@@ -9,7 +9,7 @@ defmodule PromExpress.ValidationTest do
             use PromExpress.Emitter, root_event: :prom_express
             require PromExpress
 
-            event_metric :known, :counter, description: "Known"
+            event_metric(:known, :counter, description: "Known")
 
             def bad(), do: PromExpress.metric_event(:unknown, 1)
           end
@@ -25,7 +25,7 @@ defmodule PromExpress.ValidationTest do
           defmodule MissingPollingFunction do
             use PromExpress.Emitter, root_event: :prom_express
 
-            polling_metric :test, :sum
+            polling_metric(:test, :sum)
           end
         end
       )

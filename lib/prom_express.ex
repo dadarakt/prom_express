@@ -14,10 +14,10 @@ defmodule PromExpress do
   end
 
   defmacro metric_event(name_ast, value_ast, metadata_ast \\ quote(do: %{})) do
-    caller     = __CALLER__.module
+    caller = __CALLER__.module
     root_event = Module.get_attribute(caller, :root_event)
 
-    raw_defs      = Module.get_attribute(caller, :event_metrics_def) || []
+    raw_defs = Module.get_attribute(caller, :event_metrics_def) || []
     defined_names = Enum.map(raw_defs, fn {n, _type, _opts} -> n end)
 
     case name_ast do
@@ -44,10 +44,17 @@ defmodule PromExpress do
   end
 
   defmacro metric_event_in(mod_ast, name_ast, value_ast, metadata_ast \\ quote(do: %{})) do
-    case {mod_ast, name_ast} do
+    expanded_mod = Macro.expand(mod_ast, __CALLER__)
+
+    case {expanded_mod, name_ast} do
       {mod, n} when is_atom(mod) and is_atom(n) ->
-        if Code.ensure_loaded?(mod) and function_exported?(mod, :__promexpress_defined_event_metrics__, 0) do
+        unless Code.ensure_loaded?(mod) do
+          raise ArgumentError, "metric_event_in/4: module #{inspect(mod)} is not loaded"
+        end
+
+        if function_exported?(mod, :__promexpress_defined_event_metrics__, 0) do
           defined = mod.__promexpress_defined_event_metrics__()
+
           unless n in defined do
             raise ArgumentError,
                   "Unknown event metric #{inspect(n)} in #{inspect(mod)}. " <>
@@ -60,8 +67,9 @@ defmodule PromExpress do
     end
 
     quote do
-      mod  = unquote(mod_ast)
-      base = mod.__promexpress_event_base__() # [root_event, snake]
+      mod = unquote(mod_ast)
+      base = mod.__promexpress_event_base__()
+
       unquote(
         emit_telemetry_ast(
           quote(do: base ++ [unquote(name_ast)]),

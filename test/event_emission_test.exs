@@ -7,9 +7,10 @@ defmodule PromExpress.EventEmissionTest do
         defmodule MyEmitterEmit do
           use PromExpress.Emitter, root_event: :prom_express
 
-          event_metric :event_test, :counter,
+          event_metric(:event_test, :counter,
             description: "Count events",
             tags: [:type]
+          )
 
           def fire(type), do: metric_event(:event_test, 1, %{type: type})
         end

@@ -47,7 +47,7 @@ defmodule PromExpress.Emitter do
         require PromExpress
 
         def some_function() do
-          metric_event_in(MyEmitter, :bar, 1)
+          PromExpress.metric_event_in(MyEmitter, :bar, 1)
         end
       end
 
@@ -57,10 +57,12 @@ defmodule PromExpress.Emitter do
   @callback poll_metrics() :: map()
 
   defmacro __using__(opts) do
-    poll_rate  = Keyword.get(opts, :poll_rate, 5_000)
+    poll_rate = Keyword.get(opts, :poll_rate, 5_000)
 
     root_event =
-      Keyword.get(opts, :root_event,
+      Keyword.get(
+        opts,
+        :root_event,
         Mix.Project.config()[:app] ||
           raise("Cannot infer app name, please provide `root_event` for metrics")
       )
@@ -69,17 +71,18 @@ defmodule PromExpress.Emitter do
       require PromExpress
       import PromExpress, only: [metric_event: 2, metric_event: 3]
 
-      import unquote(__MODULE__), only: [
-        polling_metric: 2,
-        polling_metric: 3,
-        event_metric: 2,
-        event_metric: 3
-      ]
+      import unquote(__MODULE__),
+        only: [
+          polling_metric: 2,
+          polling_metric: 3,
+          event_metric: 2,
+          event_metric: 3
+        ]
 
-      Module.register_attribute(__MODULE__, :metrics_def,       accumulate: true)
+      Module.register_attribute(__MODULE__, :metrics_def, accumulate: true)
       Module.register_attribute(__MODULE__, :event_metrics_def, accumulate: true)
 
-      @poll_rate  unquote(poll_rate)
+      @poll_rate unquote(poll_rate)
       @root_event unquote(root_event)
 
       @before_compile unquote(__MODULE__)
@@ -96,15 +99,17 @@ defmodule PromExpress.Emitter do
       @metrics_def {unquote(name), unquote(type), []}
     end
   end
+
   defmacro polling_metric(name, type, opts)
            when is_atom(name) and is_atom(type) and is_list(opts) do
     quote do
       @metrics_def {unquote(name), unquote(type), unquote(opts)}
     end
   end
+
   defmacro polling_metric(_name, _type, bad_opts) do
-  raise ArgumentError,
-        "polling_metric/3 expects the 3rd argument to be a keyword list, got: #{Macro.to_string(bad_opts)}"
+    raise ArgumentError,
+          "polling_metric/3 expects the 3rd argument to be a keyword list, got: #{Macro.to_string(bad_opts)}"
   end
 
   @doc """
@@ -116,26 +121,28 @@ defmodule PromExpress.Emitter do
       @event_metrics_def {unquote(name), unquote(type), []}
     end
   end
+
   defmacro event_metric(name, type, opts)
            when is_atom(name) and is_atom(type) and is_list(opts) do
     quote do
       @event_metrics_def {unquote(name), unquote(type), unquote(opts)}
     end
   end
+
   defmacro event_metric(_name, _type, bad_opts) do
-  raise ArgumentError,
-        "event_metric/3 expects the 3rd argument to be a keyword list, got: #{Macro.to_string(bad_opts)}"
+    raise ArgumentError,
+          "event_metric/3 expects the 3rd argument to be a keyword list, got: #{Macro.to_string(bad_opts)}"
   end
 
   defmacro __before_compile__(env) do
-    caller          = env.module
-    polling_metrics = Module.get_attribute(caller, :metrics_def)       || []
-    event_metrics   = Module.get_attribute(caller, :event_metrics_def) || []
-    poll_rate       = Module.get_attribute(caller, :poll_rate)
-    root_event      = Module.get_attribute(caller, :root_event)
+    caller = env.module
+    polling_metrics = Module.get_attribute(caller, :metrics_def) || []
+    event_metrics = Module.get_attribute(caller, :event_metrics_def) || []
+    poll_rate = Module.get_attribute(caller, :poll_rate)
+    root_event = Module.get_attribute(caller, :root_event)
 
     last_segment = caller |> Module.split() |> List.last()
-    snake        = last_segment |> Macro.underscore() |> String.to_atom()
+    snake = last_segment |> Macro.underscore() |> String.to_atom()
 
     if polling_metrics != [] and not Module.defines?(caller, {:poll_metrics, 0}, :def) do
       raise CompileError,
@@ -159,7 +166,7 @@ defmodule PromExpress.Emitter do
             line: env.line,
             description:
               "Invalid options for polling_metric #{inspect(name)}. " <>
-              "Expected a keyword list, got: #{Macro.to_string(bad_opts)}"
+                "Expected a keyword list, got: #{Macro.to_string(bad_opts)}"
       end)
 
     event_metrics =
@@ -176,7 +183,7 @@ defmodule PromExpress.Emitter do
             line: env.line,
             description:
               "Invalid options for event_metric #{inspect(name)}. " <>
-              "Expected a keyword list, got: #{Macro.to_string(bad_opts)}"
+                "Expected a keyword list, got: #{Macro.to_string(bad_opts)}"
       end)
 
     poll_event = [root_event, snake]
@@ -187,11 +194,21 @@ defmodule PromExpress.Emitter do
 
         build_fun =
           case type do
-            :last_value   -> :last_value
-            :counter      -> :counter
-            :summary      -> :summary
-            :distribution -> :distribution
-            :sum          -> :sum
+            :last_value ->
+              :last_value
+
+            :counter ->
+              :counter
+
+            :summary ->
+              :summary
+
+            :distribution ->
+              :distribution
+
+            :sum ->
+              :sum
+
             other ->
               raise ArgumentError,
                     "Unsupported polling metric type #{inspect(other)} for #{inspect(name)}"
@@ -202,7 +219,7 @@ defmodule PromExpress.Emitter do
             unquote(metric_name),
             Keyword.merge(
               [
-                event_name:  @poll_event_base,
+                event_name: @poll_event_base,
                 # polling metrics expect a map like %{test_a: 1, test_b: 2}
                 # measurement: :test_a / :test_b
                 measurement: unquote(name)
@@ -215,16 +232,26 @@ defmodule PromExpress.Emitter do
 
     event_telemetry_ast =
       for {name, type, opts} <- event_metrics do
-        event_name  = [root_event, snake, name]
+        event_name = [root_event, snake, name]
         metric_name = event_name
 
         build_fun =
           case type do
-            :last_value   -> :last_value
-            :counter      -> :counter
-            :summary      -> :summary
-            :distribution -> :distribution
-            :sum          -> :sum
+            :last_value ->
+              :last_value
+
+            :counter ->
+              :counter
+
+            :summary ->
+              :summary
+
+            :distribution ->
+              :distribution
+
+            :sum ->
+              :sum
+
             other ->
               raise ArgumentError,
                     "Unsupported event metric type #{inspect(other)} for #{inspect(name)}"
@@ -235,7 +262,7 @@ defmodule PromExpress.Emitter do
             unquote(metric_name),
             Keyword.merge(
               [
-                event_name:  unquote(event_name),
+                event_name: unquote(event_name),
                 measurement: :value
               ],
               unquote(opts)
@@ -313,7 +340,7 @@ defmodule PromExpress.Emitter do
       @prom_ex_plugin true
 
       @poll_event_base unquote(poll_event)
-      @poll_rate       unquote(poll_rate)
+      @poll_rate unquote(poll_rate)
 
       @doc false
       def __promexpress_event_base__(), do: unquote(poll_event)
