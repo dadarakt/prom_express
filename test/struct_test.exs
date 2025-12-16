@@ -7,7 +7,7 @@ defmodule PromExpress.StructTest do
     CompilationHelper.compile_and_get!(
       quote do
         defmodule MyEmitterPolling do
-          use PromExpress.Emitter, root_event: :prom_express, poll_rate: 10_000
+          use PromExpress.Emitter, root_event: :prom_express
 
           polling_metric :test_a, :last_value, description: "A"
           def poll_metrics(), do: %{test_a: 42}
@@ -16,8 +16,7 @@ defmodule PromExpress.StructTest do
       MyEmitterPolling
     )
 
-    plugin = Module.concat([PromExpress.Metrics, "MyEmitterPolling"])
-    [polling] = plugin.polling_metrics([])
+    [polling] = apply(MyEmitterPolling, :polling_metrics, [[]])
 
     # PromEx.MetricTypes.Polling struct
     assert match?(%PromEx.MetricTypes.Polling{}, polling)
@@ -37,8 +36,7 @@ defmodule PromExpress.StructTest do
       MyEmitterEvents
     )
 
-    plugin = Module.concat([PromExpress.Metrics, "MyEmitterEvents"])
-    [event_group] = plugin.event_metrics([])
+    [event_group] = apply(MyEmitterEvents, :event_metrics, [[]])
 
     assert match?(%PromEx.MetricTypes.Event{}, event_group)
 

@@ -20,13 +20,11 @@ defmodule PromExpress.CodegenTest do
       MyEmitterForCodegen
     )
 
-    plugin = Module.concat([PromExpress.Metrics, "MyEmitterForCodegen"])
-    assert Code.ensure_loaded?(plugin)
-
-    attrs = plugin.__info__(:attributes)
+    assert Code.ensure_loaded?(MyEmitterForCodegen)
+    attrs = apply(MyEmitterForCodegen, :__info__, [:attributes])
     assert true in Keyword.get(attrs, :prom_ex_plugin, [])
 
-    assert function_exported?(plugin, :polling_metrics, 1)
-    assert function_exported?(plugin, :event_metrics, 1)
+    assert function_exported?(MyEmitterForCodegen, :polling_metrics, 1)
+    assert function_exported?(MyEmitterForCodegen, :event_metrics, 1)
   end
 end
