@@ -55,6 +55,8 @@ end
 If a module defines polling metrics, it must implement poll_metrics/0.
 Missing implementations fail compilation.
 
+---
+
 ## Emitting Metrics
 
 ### From the same module
@@ -67,6 +69,7 @@ end
 The metric name is validated at compile time when given as a literal atom.
 
 ### From another module
+
 ```elixir
 defmodule MyWorker do
   require PromExpress
@@ -99,13 +102,6 @@ def plugins do
 ] ++ PromExpress.metric_plugins()
 end
 ```
-
----
-
-## Design Goals
-- Compile-time validation of metric names
-- Minimal runtime overhead
-- No runtime registry or global state
 
 ---
 
