@@ -280,6 +280,8 @@ defmodule PromExpress.Emitter do
         end
       end
 
+    defined_event_names = Enum.map(event_metrics, fn {n, _t, _o} -> n end)
+
     quote do
       use PromEx.Plugin
       import Telemetry.Metrics
@@ -291,6 +293,12 @@ defmodule PromExpress.Emitter do
 
       @poll_event_base unquote(poll_event)
       @poll_rate       unquote(poll_rate)
+
+      @doc false
+      def __promexpress_event_base__(), do: unquote(poll_event)
+
+      @doc false
+      def __promexpress_defined_event_metrics__(), do: unquote(defined_event_names)
 
       unquote(polling_fun_ast)
       unquote(event_metrics_fun_ast)

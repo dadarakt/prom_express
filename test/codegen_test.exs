@@ -7,7 +7,7 @@ defmodule PromExpress.CodegenTest do
     CompilationHelper.compile_and_get!(
       quote do
         defmodule MyEmitterForCodegen do
-          use PromExpress.Emitter, root_event: :pet_ai, poll_rate: 1234
+          use PromExpress.Emitter, root_event: :test, poll_rate: 1234
           require PromExpress
 
           polling_metric :test_a, :last_value, description: "A"
