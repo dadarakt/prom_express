@@ -3,7 +3,6 @@ defmodule PromExpress do
   Helpers for emitting metrics from modules that `use PromExpress.Emitter`.
   """
 
-  # Returns quoted AST (not a macro), so we can unquote it wherever we want.
   defp emit_telemetry_ast(event_name_ast, value_ast, metadata_ast) do
     quote do
       :telemetry.execute(
@@ -45,7 +44,6 @@ defmodule PromExpress do
   end
 
   defmacro metric_event_in(mod_ast, name_ast, value_ast, metadata_ast \\ quote(do: %{})) do
-    # Optional compile-time validation only when both are literals.
     case {mod_ast, name_ast} do
       {mod, n} when is_atom(mod) and is_atom(n) ->
         if Code.ensure_loaded?(mod) and function_exported?(mod, :__promexpress_defined_event_metrics__, 0) do

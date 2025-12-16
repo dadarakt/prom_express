@@ -18,7 +18,6 @@ defmodule PromExpress.StructTest do
 
     [polling] = apply(MyEmitterPolling, :polling_metrics, [[]])
 
-    # PromEx.MetricTypes.Polling struct
     assert match?(%PromEx.MetricTypes.Polling{}, polling)
   end
 

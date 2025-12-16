@@ -10,6 +10,9 @@ defmodule PromExpress.Emitter do
   When polling_metrics are added, a function `poll_metrics/1` is required, which returns a
   map keyed with the names of the `polling_metric`s.
 
+  Metrics are either polled in the provided `poll_rate` option of `Emitter` (default: 5_000 ms), or
+  functions within the module use the helper macro `metric_event/3` to emit event metrics.
+
   Example:
       defmodule MyEmitter do
         use PromExpress.Emitter, poll_rate: 10_000
@@ -27,6 +30,24 @@ defmodule PromExpress.Emitter do
 
         def some_function(type) do
           metric_event(:bar, 1, %{type: type})
+        end
+      end
+
+  Event metrics can also be called from other modules, using the `metric_event_in/4` helper macro,
+  use `require PromExpress` to enable usage.
+
+  Example for cross-module usage:
+      defmodule MyEmitter do
+        use PromExpress.Emitter
+
+        event_metric :bar, :counter
+      end
+
+      defmodule CallingModule do
+        require PromExpress
+
+        def some_function() do
+          metric_event_in(MyEmitter, :bar, 1)
         end
       end
 
