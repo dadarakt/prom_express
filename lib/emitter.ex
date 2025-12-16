@@ -7,9 +7,12 @@ defmodule PromExpress.Emitter do
     * `polling_metric/3` — describe **polling** metrics at compile time
     * `event_metric/3`   — describe **event-based** metrics at compile time
 
+  When polling_metrics are added, a function `poll_metrics/1` is required, which returns a
+  map keyed with the names of the `polling_metric`s.
+
   Example:
       defmodule MyEmitter do
-        use PromExpress.Emitter
+        use PromExpress.Emitter, poll_rate: 10_000
 
         polling_metric :foo, :last_value,
           description: "Current foo value"
@@ -26,6 +29,8 @@ defmodule PromExpress.Emitter do
           metric_event(:bar, 1, %{type: type})
         end
       end
+
+  Look into the promex documentation for more on all the types of metrics and their respective options.
   """
 
   @callback poll_metrics() :: map()
@@ -60,6 +65,11 @@ defmodule PromExpress.Emitter do
     end
   end
 
+  @doc """
+  A polling metrics are periodically (poll_rate option of this macro) collected instead of emitted via events.
+  `poll_metrics` must return a value for the name of each metric, and can additionally provide tags for labelling
+  of data.
+  """
   defmacro polling_metric(name, type) when is_atom(name) and is_atom(type) do
     quote do
       @metrics_def {unquote(name), unquote(type), []}
@@ -76,6 +86,10 @@ defmodule PromExpress.Emitter do
         "polling_metric/3 expects the 3rd argument to be a keyword list, got: #{Macro.to_string(bad_opts)}"
   end
 
+  @doc """
+  Event metrics are metrics which are emitted dynamically from the code.
+  They require a value and can optionally have a set of tags to label data points.
+  """
   defmacro event_metric(name, type) when is_atom(name) and is_atom(type) do
     quote do
       @event_metrics_def {unquote(name), unquote(type), []}
@@ -144,10 +158,8 @@ defmodule PromExpress.Emitter do
               "Expected a keyword list, got: #{Macro.to_string(bad_opts)}"
       end)
 
-    # polling events use [:root_event, snake]
     poll_event = [root_event, snake]
 
-    # ---- Polling metrics AST ----
     polling_metrics_ast =
       for {name, type, opts} <- polling_metrics do
         metric_name = poll_event ++ [name]
@@ -180,10 +192,6 @@ defmodule PromExpress.Emitter do
         end
       end
 
-    # ---- Event metrics AST ----
-    # IMPORTANT: each event metric gets its own telemetry event_name:
-    #   [:root_event, snake, name]
-    # and always uses measurement: :value
     event_telemetry_ast =
       for {name, type, opts} <- event_metrics do
         event_name  = [root_event, snake, name]
