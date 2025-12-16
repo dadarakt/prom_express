@@ -8,6 +8,7 @@ defmodule PromExpress.MixProject do
       elixir: "~> 1.18",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
+      description: "Express route to PromEx metrics in your modules",
       deps: deps()
     ]
   end

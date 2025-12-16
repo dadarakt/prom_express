@@ -17,12 +17,14 @@ defmodule PromExpress.Emitter do
       defmodule MyEmitter do
         use PromExpress.Emitter, poll_rate: 10_000
 
-        polling_metric :foo, :last_value,
+        polling_metric(:foo, :last_value,
           description: "Current foo value"
+        )
 
-        event_metric :bar, :counter,
+        event_metric(:bar, :counter,
           description: "Number of bars",
           tags: [:type]
+        )
 
         def poll_metrics() do
           %{foo: 42}
@@ -90,8 +92,8 @@ defmodule PromExpress.Emitter do
   end
 
   @doc """
-  A polling metrics are periodically (poll_rate option of this macro) collected instead of emitted via events.
-  `poll_metrics` must return a value for the name of each metric, and can additionally provide tags for labelling
+  A polling metrics are periodically (`poll_rate` option of this macro) collected instead of emitted via events.
+  `poll_metrics` must return a value for the name of each metric in a map, and can additionally provide tags for labeling.
   of data.
   """
   defmacro polling_metric(name, type) when is_atom(name) and is_atom(type) do
