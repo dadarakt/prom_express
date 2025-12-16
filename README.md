@@ -6,8 +6,6 @@ It lets you declare polling and event-based metrics in one place and automatical
 
 The aim is not to replace the great `PromEx` library (all credit goes there) but just to provide a simpler (and opinionated) option for declaring metrics.
 
----
-
 ## Installation
 
 Add `prom_express` to your dependencies:
@@ -19,8 +17,6 @@ def deps do
   ]
 end
 ```
-
----
 
 ## Defining Metrics
 Create a module and use PromExpress.Emitter.
@@ -54,8 +50,6 @@ end
 
 If a module defines polling metrics, it must implement poll_metrics/0.
 Missing implementations fail compilation.
-
----
 
 ## Emitting Metrics
 
@@ -102,8 +96,6 @@ def plugins do
 ] ++ PromExpress.metric_plugins()
 end
 ```
-
----
 
 ## License
 MIT
