@@ -56,8 +56,13 @@ Missing implementations fail compilation.
 ### From the same module
 
 ```elixir
-def handle_request(status) do
-  PromExpress.metric_event(:requests, 1, %{status: status})
+defmodule MyApp.Metrics do
+  use PromExpress.Emitter
+  
+  event_metric :test, :last_value
+  def handle_request(status) do
+    PromExpress.metric_event(:requests, 1, %{status: status})
+  end
 end
 ```
 The metric name is validated at compile time when given as a literal atom.
