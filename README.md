@@ -82,7 +82,7 @@ end
 When both the module and metric name are literals, invalid metric names cause
 compile-time errors.
 
-## Generated PromEx Plugin
+## Generated PromEx Plugin Code
 Each module using PromExpress.Emitter automatically becomes a PromEx.Plugin
 and is marked for discovery by PromEx.
 
