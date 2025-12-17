@@ -54,7 +54,7 @@ defmodule MyApp.SystemMetrics do
 end
 ```
 
-If a module defines polling metrics, it must implement poll_metrics/0.
+If a module defines polling metrics, it must implement `poll_metrics/0`.
 Missing implementations fail compilation.
 
 ## Emitting Metrics
@@ -62,8 +62,13 @@ Missing implementations fail compilation.
 ### From the same module
 
 ```elixir
-def handle_request(status) do
-  PromExpress.metric_event(:requests, 1, %{status: status})
+defmodule MyApp.Metrics do
+  use PromExpress.Emitter
+  
+  event_metric :test, :last_value
+  def handle_request(status) do
+    PromExpress.metric_event(:requests, 1, %{status: status})
+  end
 end
 ```
 
@@ -84,7 +89,7 @@ end
 When both the module and metric name are literals, invalid metric names cause
 compile-time errors.
 
-## Generated PromEx Plugin
+## Generated PromEx Plugin Code
 
 Each module using PromExpress.Emitter automatically becomes a PromEx.Plugin
 and is marked for discovery by PromEx.

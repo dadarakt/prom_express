@@ -47,7 +47,7 @@ defmodule PromExpress do
   ```
   [:root_event, :my_emitter, :requests]
   ```
-  with measurements %{value: value} and the given metadata.
+  with measurements `%{value: value}` and the given metadata.
   """
   defmacro metric_event(name_ast, value_ast, metadata_ast \\ quote(do: %{})) do
     caller = __CALLER__.module
