@@ -48,7 +48,7 @@ defmodule MyApp.SystemMetrics do
 end
 ```
 
-If a module defines polling metrics, it must implement poll_metrics/0.
+If a module defines polling metrics, it must implement `poll_metrics/0`.
 Missing implementations fail compilation.
 
 ## Emitting Metrics
