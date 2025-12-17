@@ -93,7 +93,7 @@ defmodule PromExpress.Emitter do
 
   @doc """
   A polling metrics are periodically (`poll_rate` option of this macro) collected instead of emitted via events.
-  `poll_metrics` must return a value for the name of each metric in a map, and can additionally provide tags for labeling.
+  `poll_metrics/0` must return a value for the name of each metric in a map, and can additionally provide tags for labeling
   of data.
   """
   defmacro polling_metric(name, type) when is_atom(name) and is_atom(type) do
