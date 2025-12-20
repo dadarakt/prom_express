@@ -164,7 +164,7 @@ defmodule PromExpress do
   end
 
   @doc """
-  Used to retrieve all modules which emit metrics.
+  Used to retrieve all modules which emit metrics for a given application.
   Intended usage is to add them to your `PromEx` plugins list:
 
   ```
@@ -173,15 +173,14 @@ defmodule PromExpress do
     [
       Plugins.Application,
       ...
-    ] ++ PromExpress.metric_plugins()
+    ] ++ PromExpress.metric_plugins(:my_app)
   end
   ```
 
   If preferred, you can simply add the modules manually to the plugin list.
   """
-  def metric_plugins(app \\ nil) do
-    app = if is_nil(app), do: Mix.Project.config()[:app], else: app
-    {:ok, mods} = :application.get_key(app, :modules)
+  def metric_plugins(otp_app) when is_atom(otp_app) do
+    {:ok, mods} = :application.get_key(otp_app, :modules)
 
     for mod <- mods,
         Code.ensure_loaded?(mod),

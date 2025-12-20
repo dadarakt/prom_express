@@ -59,15 +59,12 @@ defmodule PromExpress.Emitter do
   @callback poll_metrics() :: map()
 
   defmacro __using__(opts) do
-    poll_rate = Keyword.get(opts, :poll_rate, 5_000)
-
     root_event =
-      Keyword.get(
-        opts,
-        :root_event,
-        Mix.Project.config()[:app] ||
-          raise("Cannot infer app name, please provide `root_event` for metrics")
-      )
+      Keyword.get_lazy(opts, :root_event, fn ->
+        raise("The `root_event` option is required for a `PromExpress.Emitter`")
+      end)
+
+    poll_rate = Keyword.get(opts, :poll_rate, 5_000)
 
     quote do
       require PromExpress

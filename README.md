@@ -64,7 +64,7 @@ Missing implementations fail compilation.
 ```elixir
 defmodule MyApp.Metrics do
   use PromExpress.Emitter
-  
+
   event_metric :test, :last_value
   def handle_request(status) do
     PromExpress.metric_event(:requests, 1, %{status: status})
@@ -101,8 +101,8 @@ Generated functions include:
 - `event_metrics/1`
 
 You can choose to manually register the plugins with your application's
-`PromEx` module, or use the `PromExpress.metric_plugins/0` helper to
-automatically retrieve all matching plugin modules.
+`PromEx` module, or use the `PromExpress.metric_plugins/1` helper to
+automatically retrieve all matching plugin modules for a given OTP app.
 
 ```elixir
 @impl true
@@ -110,7 +110,7 @@ def plugins do
 [
   Plugins.Application,
   ...
-] ++ PromExpress.metric_plugins()
+] ++ PromExpress.metric_plugins(:my_app)
 end
 ```
 
