@@ -1,5 +1,8 @@
 # PromExpress
 
+[![Hex.pm](https://img.shields.io/hexpm/v/prom_express.svg)](https://hex.pm/packages/prom_express)
+[![License](https://img.shields.io/hexpm/l/prom_epxress.svg)](LICENSE)
+
 **PromExpress** is a small DSL for defining and emitting
 [PromEx](https://hexdocs.pm/prom_ex) metrics with compile-time
 validation and minimal boilerplate.
