@@ -179,8 +179,8 @@ defmodule PromExpress do
 
   If preferred, you can simply add the modules manually to the plugin list.
   """
-  def metric_plugins() do
-    app = Mix.Project.config()[:app]
+  def metric_plugins(app \\ nil) do
+    app = if is_nil(app), do: Mix.Project.config()[:app], else: app
     {:ok, mods} = :application.get_key(app, :modules)
 
     for mod <- mods,
